@@ -1,0 +1,66 @@
+
+// Initialize a container
+$container = new Container();
+
+// Define the database connection as a service
+$container->set('conn', function() {
+    return mysqli_connect("localhost", "root", "", "blogphp");
+});
+
+// Define the SQL query as a service
+$container->set('sql', function() {
+    return "SELECT * FROM blog_data";
+});
+
+// Define a service for creating new posts
+$container->set('new_post', function($container) {
+    if(isset($_POST['new_post'])){
+        $title = $_POST['title'];
+        $content = $_POST['content'];
+        $stmt =  $container->get('conn')->prepare("INSERT INTO blog_data(title, content) VALUES(?, ?)");
+        $stmt->bind_param("ss", $title, $content);
+        $stmt->execute();
+        header("Location: index.php?info=added");
+        exit();
+    }
+});
+
+// Define a service for getting post data based on id
+$container->set('get_post', function($container) {
+    if(isset($_REQUEST['id'])){
+        $id = $_REQUEST['id'];
+        $stmt = $container->get('conn')->prepare("SELECT * FROM blog_data WHERE id = ?");
+        $stmt->bind_param("i",$id); 
+        $stmt->execute();
+        $query = $stmt->get_result();
+    }
+});
+
+// Define a service for deleting a post
+$container->set('delete_post', function($container) {
+    if(isset($_REQUEST['delete'])){
+        $id = $_REQUEST['id'];
+        $stmt = $container->get('conn')->prepare("DELETE FROM blog_data WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        header("Location: index.php");
+        exit();
+    }
+});
+
+$container->set('update_post', function($container) {
+    if(isset($_POST['update'])){
+        $id = $_POST['id'];
+        $title = $_POST['title'];
+        $content = $_POST['content'];
+        $stmt = $conn->prepare("UPDATE blog_data SET title = ?, content = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $title, $content,$id);
+       if(! $stmt->execute()){
+        echo 'Value Error';
+       }
+        header("Location: index.php");
+        exit();
+    }
+});
+
+
+
